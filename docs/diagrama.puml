@@ -1,0 +1,74 @@
+@startuml
+title Cheddar CR - Arquitectura del Sistema
+
+actor "Jugador" as user
+
+rectangle "Cheddar CR" {
+
+  ' --- API Gateway ---
+  node "API Gateway (Traefik)" as gateway
+
+  ' --- Contenedor 1: Recolección de datos ---
+  frame "Contenedor 1: Data Collector" as collector {
+    component "CR API Connector" as api
+    component "Player Analyzer" as analyzer
+  }
+
+  ' --- Contenedor 2: Monitoreo del Meta ---
+  frame "Contenedor 2: Meta Monitor" as meta {
+    component "Official Source Scraper" as scraper
+    component "Change Detector" as detector
+  }
+
+  ' --- Contenedor 4: Notificaciones (más cerca del usuario) ---
+  frame "Contenedor 4: Notification Engine" as notif {
+    component "Telegram Bot" as bot
+  }
+
+  ' --- Contenedor 3: Procesamiento con IA ---
+  frame "Contenedor 3: AI Processor" as ai {
+    component "LangChain Engine" as lang
+    component "Modelo Local (LLM)" as model
+  }
+
+  ' --- Contenedor 5: Persistencia ---
+  frame "Contenedor 5: Persistence Layer" as persistence {
+    database "PostgreSQL" as db
+    node "Redis (Cache)" as redis
+  }
+
+  ' --- Mensajería ---
+  node "RabbitMQ" as mq
+}
+
+' --- Relaciones principales ---
+user --> bot : Interacción Principal
+
+' --- Flujo de solicitud ---
+bot --> mq : Publica solicitud (resumen / recomendación)
+mq --> lang : Entrega solicitud al motor IA
+lang --> model : Procesamiento de lenguaje y análisis
+lang --> db : Guarda resultados e historial
+lang --> redis : Cachea resultados recientes
+
+' --- Flujo de respuesta ---
+lang --> mq : Publica respuesta generada
+mq --> bot : Entrega recomendaciones al bot
+bot --> user : Notificación y resumen personalizado
+
+' --- Flujo interno de datos ---
+gateway --> api
+gateway --> scraper
+gateway --> bot
+
+api --> analyzer : Datos del jugador
+scraper --> detector : Novedades oficiales
+analyzer --> mq : Publica datos del jugador
+detector --> mq : Publica cambios detectados
+mq --> lang : Envía eventos (jugador / meta)
+
+' --- Persistencia general ---
+analyzer --> db : Guarda estadísticas del jugador
+detector --> db : Registra cambios del meta
+
+@enduml
