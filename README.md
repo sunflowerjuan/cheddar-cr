@@ -13,7 +13,7 @@ Cheddar CR es un sistema inteligente que analiza el rendimiento de jugadores de 
 1. **API Gateway (Traefik)**:
    Actúa como punto de entrada al sistema, redirige las peticiones del usuario o servicios externos al contenedor correspondiente
 2. **Data Collector**:
-   Se comunica con la API oficial de Clash Royale, obtiene datos del jugador (nivel, mazos, winrate, cartas desbloqueadas), procesa esa información para generar un perfil del jugador (fuerzas, debilidades, tendencias personales)
+   Se comunica con la API oficial de Clash Royale, obtiene datos del jugador (nivel, mazos, winrate, cartas desbloqueadas), procesa esa información para generar un perfil del jugador (fuerzas, debilidades, tendencias personales) mas informacion [aqui](data-collector\README.md)
 3. **Meta Monitor**:
    Revisa fuentes oficiales del juego en busca de novedades, y publica estos hallazgos en para ser procesados por la IA
 4. **AI Processor**:
