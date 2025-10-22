@@ -1,0 +1,40 @@
+@startuml
+title Cheddar CR - Arquitectura Interna del Data Collector
+
+actor "Scheduler / Cron" as scheduler
+actor "API Gateway" as gateway
+
+rectangle "Contenedor: Data Collector" {
+
+  ' --- Módulos internos ---
+  component "CR API Connector" as api
+  component "Player Analyzer" as analyzer
+  component "Battle Log Fetcher" as battles
+  component "Data Storage Manager" as storage
+  component "Event Publisher" as publisher
+
+  database "JSON Data Store\n(data-collector/)" as json
+  database "PostgreSQL" as db
+  node "RabbitMQ" as mq
+}
+
+' --- Flujo de ejecución programada ---
+scheduler --> api : Ejecuta tareas periódicas (cronjob)
+gateway --> api : Solicitudes manuales (on-demand)
+
+' --- Recolección de datos ---
+api --> analyzer : Envia datos de jugador
+api --> battles : Envia registros de batallas
+
+' --- Análisis y persistencia ---
+analyzer --> storage : Guarda player_data.json
+battles --> storage : Guarda battle_log.json
+storage --> json : Archivos locales JSON
+storage --> db : Inserta datos estructurados
+
+' --- Publicación de eventos ---
+analyzer --> publisher : Notifica nuevos datos
+battles --> publisher : Notifica actualizaciones
+publisher --> mq : Publica eventos (player_update, battle_update)
+
+@enduml
