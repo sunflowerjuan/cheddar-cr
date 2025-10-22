@@ -1,6 +1,9 @@
 import os
+from dotenv import load_dotenv
 
-TOKEN = os.getenv("TOKEN","eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzUxMiIsImtpZCI6IjI4YTMxOGY3LTAwMDAtYTFlYi03ZmExLTJjNzQzM2M2Y2NhNSJ9.eyJpc3MiOiJzdXBlcmNlbGwiLCJhdWQiOiJzdXBlcmNlbGw6Z2FtZWFwaSIsImp0aSI6IjBmYzA4NzUwLTJkZGQtNDVmMi1iMzdmLTI0M2E5NGMyNjU1MCIsImlhdCI6MTc2MDk5NDE0NSwic3ViIjoiZGV2ZWxvcGVyLzBhNmM4NjRlLTY0YWEtNzdiMC0wMDExLWQzNWZhZDE3ODgxMCIsInNjb3BlcyI6WyJyb3lhbGUiXSwibGltaXRzIjpbeyJ0aWVyIjoiZGV2ZWxvcGVyL3NpbHZlciIsInR5cGUiOiJ0aHJvdHRsaW5nIn0seyJjaWRycyI6WyIxODEuNTguODkuMjE2Il0sInR5cGUiOiJjbGllbnQifV19.8908ePAGy3lZwD4H-e2VLswl5xTA3KZH576jut1Hzf5IfOnkzgj-yh5j6DIKy3t2UFZyn34xai5ekyvM3bM8tg")
+load_dotenv()
+
+TOKEN = os.getenv("TOKEN")
 BASE_URL = "https://api.clashroyale.com/v1"
 HEADERS = {"Authorization": f"Bearer {TOKEN}"}
 DATA_DIR = os.getenv("DATA_DIR", "/app/data")
