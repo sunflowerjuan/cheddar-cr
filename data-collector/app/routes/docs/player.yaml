@@ -1,0 +1,79 @@
+Recolecta los datos completos del jugador a partir de su tag.
+---
+tags:
+  - Player
+parameters:
+  - name: player_tag
+    in: path
+    type: string
+    required: true
+    description: Tag del jugador (sin el símbolo #)
+    example: 9GQYJJR
+
+responses:
+  200:
+    description: Datos del jugador obtenidos correctamente
+    schema:
+      type: object
+      properties:
+        name:
+          type: string
+          example: Bootyclapper
+        level:
+          type: integer
+          example: 35
+        trophies:
+          type: integer
+          example: 7053
+        arena:
+          type: string
+          example: Dragon Spa
+        performance:
+          type: object
+          properties:
+            battles:
+              type: integer
+              example: 2894
+            wins:
+              type: integer
+              example: 1603
+            losses:
+              type: integer
+              example: 1291
+            win_rate:
+              type: number
+              format: float
+              example: 55.39
+        cards:
+          type: object
+          properties:
+            allCards:
+              type: array
+              items:
+                type: object
+                properties:
+                  name:
+                    type: string
+                    example: Hog Rider
+                  level:
+                    type: integer
+                    example: 10
+            currentDeck:
+              type: array
+              items:
+                type: object
+                properties:
+                  name:
+                    type: string
+                    example: Mini P.E.K.K.A
+                  level:
+                    type: integer
+                    example: 10
+  404:
+    description: Jugador no encontrado
+    schema:
+      type: object
+      properties:
+        error:
+          type: string
+          example: "Jugador #9GQYJJR no encontrado"
