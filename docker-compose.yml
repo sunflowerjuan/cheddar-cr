@@ -17,8 +17,6 @@ services:
   data-collector:
     build: ./data-collector
     container_name: data-collector
-    ports:
-      - 5000:5000
     env_file:
       - ./data-collector/.env
     labels:
