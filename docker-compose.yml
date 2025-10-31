@@ -1,19 +1,32 @@
-version: "3.9"
+# Docker Compose configuration for Cheddar-cr
 
 services:
-  data-collector:
-    build: .
-    container_name: data_collector
-    restart: always
-    env_file:
-      - .env
-    environment:
-      - TOKEN=${TOKEN}
+  traefik:
+    image: traefik:v3.5
+    command:
+      - "--api.dashboard=true"
+      - "--api.insecure=true"
+      - "--providers.docker=true"
+      - "--entrypoints.web.address=:80"
+    ports:
+      - 80:80
+      - 8080:8080
     volumes:
-      - ./data:/app/data
-    networks:
-      - backend
-    command: python main.py
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+
+  data-collector:
+    build: ./data-collector
+    container_name: data-collector
+    ports:
+      - 5000:5000
+    env_file:
+      - ./data-collector/.env
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.backend-collector.rule=Host(`cr.localhost`) && (PathPrefix(`/collector`) || PathPrefix(`/flasgger_static`) || PathPrefix(`/apidocs`))"
+      - "traefik.http.services.backend-collector.loadbalancer.server.port=5000"
+      - "traefik.http.middlewares.strip-collector.stripprefix.prefixes=/collector"
+      - "traefik.http.routers.backend-collector.middlewares=strip-collector"
 
 networks:
   backend:

@@ -1,0 +1,111 @@
+Recolecta el historial de batallas del jugador.
+---
+tags:
+  - Battles
+parameters:
+  - name: player_tag
+    in: path
+    type: string
+    required: true
+    description: Tag del jugador (sin el símbolo '#')
+    example: 9GQYJJR
+
+responses:
+  200:
+    description: Historial de batallas obtenido correctamente
+    schema:
+      type: object
+      properties:
+        battles:
+          type: array
+          items:
+            type: object
+            properties:
+              battle_type:
+                type: string
+                example: "PvP"
+              game_mode:
+                type: string
+                example: "Ladder"
+              result:
+                type: string
+                example: "win"
+              player:
+                type: object
+                properties:
+                  name:
+                    type: string
+                    example: "Bootyclapper"
+                  elixir_leaked:
+                    type: number
+                    example: 0.02
+                  deck:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        name:
+                          type: string
+                          example: "Hog Rider"
+                        level:
+                          type: integer
+                          example: 10
+                        elixirCost:
+                          type: integer
+                          example: 4
+                        rarity:
+                          type: string
+                          example: "rare"
+              opponent:
+                type: object
+                properties:
+                  name:
+                    type: string
+                    example: "toediddler"
+                  elixir_leaked:
+                    type: number
+                    example: 4.46
+                  deck:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        name:
+                          type: string
+                          example: "Valkyrie"
+                        level:
+                          type: integer
+                          example: 10
+                        elixirCost:
+                          type: integer
+                          example: 4
+                        rarity:
+                          type: string
+                          example: "rare"
+              summary:
+                type: object
+                properties:
+                  total_battles:
+                    type: integer
+                    example: 30
+                  wins:
+                    type: integer
+                    example: 19
+                  losses:
+                    type: integer
+                    example: 11
+                  draws:
+                    type: integer
+                    example: 0
+                  win_rate:
+                    type: number
+                    format: float
+                    example: 63.33
+  404:
+    description: Jugador no encontrado
+    schema:
+      type: object
+      properties:
+        error:
+          type: string
+          example: "Jugador #123 no encontrado"
