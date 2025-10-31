@@ -7,8 +7,8 @@ parameters:
     in: path
     type: string
     required: true
-    description: Tag del jugador (sin el símbolo #)
-    example: 9GQYJJR
+    description: Tag del jugador (sin el símbolo '#')
+    example: Y9LJQ8GYC
 
 responses:
   200:
