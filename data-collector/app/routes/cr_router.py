@@ -1,4 +1,5 @@
 from flask import Blueprint, jsonify
+from flasgger import swag_from
 from collector.api_connector import CRAPIConnector
 from collector.player_analyzer import PlayerAnalyzer
 from collector.battle_fetcher import BattleFetcher
@@ -7,6 +8,7 @@ from collector import cr_services
 router_bp = Blueprint('router', __name__, url_prefix='/')
 
 @router_bp.route('/player/<player_tag>', methods=['GET'])
+@swag_from('docs/player.yaml')
 def collect_player(player_tag):
     """Recolecta datos del jugador."""
     api = CRAPIConnector()
@@ -21,6 +23,7 @@ def collect_player(player_tag):
 
 
 @router_bp.route('/battles/<player_tag>', methods=['GET'])
+@swag_from('docs/battles.yaml')
 def collect_battles(player_tag):
     """Recolecta +datos de batallas."""
     api = CRAPIConnector()
