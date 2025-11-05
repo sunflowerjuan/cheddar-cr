@@ -1,0 +1,57 @@
+{
+    "gameName": "Clash Royale",
+    "title": "November Balance Changes",
+    "publishDate": "2025-11-03T11:00:00.000Z",
+    "ajustes": [
+        {
+            "nombre": "Elixir Collector",
+            "cambio": "Lifetime: 1min26sec → 1min33sec (+8%)",
+            "tipo": "mejora"
+        },
+        {
+            "nombre": "Wall Breakers",
+            "cambio": "Damage: 391 → 350 (-10%)",
+            "tipo": "debilitación"
+        },
+        {
+            "nombre": "Wall Breakers Evolution",
+            "cambio": "Damage (Runner): 197 → 184 (-6%)",
+            "tipo": "debilitación"
+        },
+        {
+            "nombre": "Royal Ghost Evolution",
+            "cambio": "Souldiers Area Damage: 261 → 133 (-49%)",
+            "tipo": "debilitación"
+        },
+        {
+            "nombre": "Rascals",
+            "cambio": "Boy Damage: 204 → 217 (+6%)",
+            "tipo": "mejora"
+        },
+        {
+            "nombre": "Phoenix",
+            "cambio": "Respawned Phoenix Damage: 174 → 217 (+25%)",
+            "tipo": "mejora"
+        },
+        {
+            "nombre": "Spirit Empress (Ground)",
+            "cambio": "Hitpoints: 1134 → 1244 (+10%)",
+            "tipo": "mejora"
+        },
+        {
+            "nombre": "Little Prince",
+            "cambio": "Guardian Damage: 202 → 217 (+8%)",
+            "tipo": "mejora"
+        },
+        {
+            "nombre": "Goblin Drill Evolution",
+            "cambio": "Spawn on submerge: 1 → 2 (+100%)",
+            "tipo": "mejora"
+        },
+        {
+            "nombre": "Golden Knight",
+            "cambio": "Reduce Dash delay: 0.2sec → 0.05sec (-75%)",
+            "tipo": "debilitación"
+        }
+    ]
+}
