@@ -13,8 +13,8 @@ def balance_endpoint():
     data = meta_data()                    
     return jsonify(data), 200
 
-@router_bp.route('/stadistics', methods=['GET'])
-@swag_from('docs/stadistics.yaml')
+@router_bp.route('/stats', methods=['GET'])
+@swag_from('docs/stats.yaml')
 def statistics_endpoint():
     """Recolecta estadísticas de cartas."""
     data = cards_stadistics()

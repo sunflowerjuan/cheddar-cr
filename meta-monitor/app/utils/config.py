@@ -32,5 +32,5 @@ template = {
         "description": "API para recolección informacion acerca de cambios en el meta de Clash Royale, basado en análisis de blogs oficiales y estadísticas de cartas.",
         "version": "1.0.0",
     },
-    "basePath": "/",
+    "basePath": "/monitor",
 }
