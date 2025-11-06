@@ -21,20 +21,38 @@ services:
       - ./data-collector/.env
     labels:
       - "traefik.enable=true"
-      - "traefik.http.routers.backend-collector.rule=Host(`cr.localhost`) && (PathPrefix(`/collector`) || PathPrefix(`/flasgger_static`) || PathPrefix(`/apidocs`))"
-      - "traefik.http.services.backend-collector.loadbalancer.server.port=5000"
+
+      # Router normal
+      - "traefik.http.routers.collector-api.rule=Host(`cr.localhost`) && PathPrefix(`/collector`)"
+      - "traefik.http.routers.collector-api.middlewares=strip-collector"
+      - "traefik.http.routers.collector-api.service=collector-api"
+      - "traefik.http.services.collector-api.loadbalancer.server.port=5000"
       - "traefik.http.middlewares.strip-collector.stripprefix.prefixes=/collector"
-      - "traefik.http.routers.backend-collector.middlewares=strip-collector"
+
+      # Router Swagger UI
+      - "traefik.http.routers.collector-swagger.rule=Host(`cr.localhost`) && PathPrefix(`/collector/apidocs`)"
+      - "traefik.http.routers.collector-swagger.service=collector-api"
+      - "traefik.http.routers.collector-static.rule=Host(`cr.localhost`) && PathPrefix(`/collector/flasgger_static`)"
+      - "traefik.http.routers.collector-static.service=collector-api"
 
   meta-collector:
     build: ./meta-monitor
     container_name: meta-monitor
     labels:
       - "traefik.enable=true"
-      - "traefik.http.routers.backend-monitor.rule=Host(`cr.localhost`) && (PathPrefix(`/monitor`) || PathPrefix(`/flasgger_static`) || PathPrefix(`/apidocs`))"
-      - "traefik.http.services.backend-monitor.loadbalancer.server.port=5001"
+
+      # Router normal
+      - "traefik.http.routers.monitor-api.rule=Host(`cr.localhost`) && PathPrefix(`/monitor`)"
+      - "traefik.http.routers.monitor-api.middlewares=strip-monitor"
+      - "traefik.http.routers.monitor-api.service=monitor-api"
+      - "traefik.http.services.monitor-api.loadbalancer.server.port=5001"
       - "traefik.http.middlewares.strip-monitor.stripprefix.prefixes=/monitor"
-      - "traefik.http.routers.backend-monitor.middlewares=strip-monitor"
+
+      # Router Swagger UI
+      - "traefik.http.routers.monitor-swagger.rule=Host(`cr.localhost`) && PathPrefix(`/monitor/apidocs`)"
+      - "traefik.http.routers.monitor-swagger.service=monitor-api"
+      - "traefik.http.routers.monitor-static.rule=Host(`cr.localhost`) && PathPrefix(`/monitor/flasgger_static`)"
+      - "traefik.http.routers.monitor-static.service=monitor-api"
 
 networks:
   backend:
