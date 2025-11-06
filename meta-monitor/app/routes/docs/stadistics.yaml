@@ -1,0 +1,40 @@
+tags:
+  - Stadistics
+summary: Obtiene estadísticas de uso y winrate de cartas en distintos modos.
+description: Este endpoint retorna información estadística procesada desde meta fuentes, optimizada para análisis.
+
+responses:
+  200:
+    description: Respuesta exitosa con estadísticas de cartas.
+    schema:
+      type: object
+      additionalProperties:
+        type: array
+        items:
+          type: object
+          properties:
+            nombre:
+              type: string
+              example: "Mosquetera"
+            uso:
+              type: string
+              example: "12%"
+            cambio_uso:
+              type: string
+              example: "-0.8%"
+            tendencia_uso:
+              type: string
+              enum: ["aumento", "disminución", "neutral"]
+              example: "disminución"
+            winrate:
+              type: string
+              example: "57%"
+            cambio_winrate:
+              type: string
+              example: "+0.9%"
+            tendencia_winrate:
+              type: string
+              enum: ["aumento", "disminución", "neutral"]
+              example: "aumento"
+  500:
+    description: Error en el servidor.
