@@ -7,6 +7,7 @@ class PlayerAnalyzer:
         """Analiza la información completa del jugador para generar un perfil avanzado."""
 
         name = player_data.get("name")
+        tag = player_data.get("tag")
         level = player_data.get("expLevel")
         trophies = player_data.get("trophies")
 
@@ -43,6 +44,7 @@ class PlayerAnalyzer:
 
 
         summary = {
+            "tag": tag,
             "name": name,
             "level": level,
             "arena": arena_name,

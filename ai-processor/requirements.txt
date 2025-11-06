@@ -1,0 +1,10 @@
+langchain
+langchain-core
+langchain-community
+langchain-mcp-adapters
+fastmcp
+
+langchain-ollama
+
+httpx
+nest-asyncio

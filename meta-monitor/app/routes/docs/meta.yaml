@@ -1,0 +1,38 @@
+tags:
+  - Meta
+summary: Obtiene los cambios de balance más recientes del juego.
+description: Retorna la información procesada desde la fuente oficial, incluyendo fecha de publicación y lista de ajustes de cartas.
+
+responses:
+  200:
+    description: Datos de cambios de balance extraídos y formateados correctamente.
+    schema:
+      type: object
+      properties:
+        gameName:
+          type: string
+          example: "Clash Royale"
+        title:
+          type: string
+          example: "November Balance Changes"
+        publishDate:
+          type: string
+          format: date-time
+          example: "2025-11-03T11:00:00.000Z"
+        ajustes:
+          type: array
+          items:
+            type: object
+            properties:
+              nombre:
+                type: string
+                example: "Elixir Collector"
+              cambio:
+                type: string
+                example: "Lifetime: 1min26sec → 1min33sec (+8%)"
+              tipo:
+                type: string
+                enum: ["mejora", "nerf", "ajuste", "neutro"]
+                example: "mejora"
+  500:
+    description: Error interno al procesar los datos.
