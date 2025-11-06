@@ -26,6 +26,16 @@ services:
       - "traefik.http.middlewares.strip-collector.stripprefix.prefixes=/collector"
       - "traefik.http.routers.backend-collector.middlewares=strip-collector"
 
+  meta-collector:
+    build: ./meta-monitor
+    container_name: meta-monitor
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.backend-monitor.rule=Host(`cr.localhost`) && (PathPrefix(`/monitor`) || PathPrefix(`/flasgger_static`) || PathPrefix(`/apidocs`))"
+      - "traefik.http.services.backend-monitor.loadbalancer.server.port=5001"
+      - "traefik.http.middlewares.strip-monitor.stripprefix.prefixes=/monitor"
+      - "traefik.http.routers.backend-monitor.middlewares=strip-monitor"
+
 networks:
   backend:
     driver: bridge
