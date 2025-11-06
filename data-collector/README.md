@@ -47,4 +47,4 @@ Nuestra API se enruta mediante el reverse proxy de Traefik con el prefijo `/coll
 - `/player/{player_tag}` - Recolecta y procesa los datos de un jugador a partir de su Tag
 - `/battles/{player_tag}` - Recolecta y procesa el historial de partidas de un jugador a partir de su Tag
 
-Si desea documentacion mas exaustiva una vez ejecutado todo el proyecto acceda a http://cr.localhost/apidocs/ en donde se especifican y se ejemplifican los endpoints de la api
+Si desea documentacion mas exaustiva una vez ejecutado todo el proyecto acceda a http://cr.localhost/collector/apidocs/ en donde se especifican y se ejemplifican los endpoints de la api
