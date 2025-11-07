@@ -1,5 +1,5 @@
 import requests
-from utils.config import PLAYER_API_BASE_URL
+from utils.config import PLAYER_API_BASE_URL,META_API_BASE_URL
 from utils.logger import get_logger
 
 logger = get_logger(__name__)
@@ -29,4 +29,25 @@ class APIConnector:
             return response.json()
         else:
             logger.error(f"Error {response.status_code} obteniendo battle log: {response.text}")
+            return None
+    
+    def get_balance_changes(self):
+        """Obtiene los cambios de balance recientes desde el meta-monitor."""
+        url = f"{META_API_BASE_URL}/meta/"
+        response = requests.get(url)
+        if response.status_code == 200:
+            logger.info("Cambios de balance obtenidos correctamente.")
+            return response.json()
+        else:
+            logger.error(f"Error {response.status_code} obteniendo cambios de balance: {response.text}")
+            return None
+    def get_card_stats(self):
+        """Obtiene las estadísticas de las cartas desde el meta-monitor."""
+        url = f"{META_API_BASE_URL}/stats/"
+        response = requests.get(url)
+        if response.status_code == 200:
+            logger.info("Estadísticas de cartas obtenidas correctamente.")
+            return response.json()
+        else:
+            logger.error(f"Error {response.status_code} obteniendo estadísticas de cartas: {response.text}")
             return None
