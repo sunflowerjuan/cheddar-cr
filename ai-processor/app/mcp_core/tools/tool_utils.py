@@ -1,6 +1,6 @@
 import requests
-from utils.config import PLAYER_API_BASE_URL,META_API_BASE_URL
-from utils.logger import get_logger
+from app.utils.config import PLAYER_API_BASE_URL,META_API_BASE_URL
+from app.utils.logger import get_logger
 
 logger = get_logger(__name__)
 

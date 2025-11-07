@@ -1,6 +1,6 @@
 import logging
 from .tool_utils import APIConnector as api
-from utils.logger import get_logger
+from app.utils.logger import get_logger
 logger = get_logger(__name__)
 
 
