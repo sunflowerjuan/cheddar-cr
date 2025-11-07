@@ -54,6 +54,18 @@ services:
       - "traefik.http.routers.monitor-static.rule=Host(`cr.localhost`) && PathPrefix(`/monitor/flasgger_static`)"
       - "traefik.http.routers.monitor-static.service=monitor-api"
 
+  mcp-server:
+    build:
+      context: ./ai-processor
+      dockerfile: Dockerfile.mcp
+    container_name: mcp_server
+    working_dir: /app
+    command: python -m app.mcp_core.mcp_server --server_type sse
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./ai-processor:/app
+    restart: unless-stopped
 networks:
   backend:
     driver: bridge
