@@ -12,15 +12,16 @@ swagger_config = {
     "specs": [
         {
             "endpoint": "apispec_1",
-            "route": "/apidocs/apispec_1.json", 
+            "route": "/collector/apidocs/apispec_1.json",
             "rule_filter": lambda rule: True,
             "model_filter": lambda tag: True,
         }
     ],
-    "static_url_path": "/flasgger_static",
+    "static_url_path": "/collector/flasgger_static",
     "swagger_ui": True,
-    "specs_route": "/apidocs/",
+    "specs_route": "/collector/apidocs/",
 }
+
 
 template = {
     "swagger": "2.0",

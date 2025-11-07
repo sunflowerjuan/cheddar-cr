@@ -11,15 +11,19 @@ from utils.logger import get_logger
 
 logger = get_logger(__name__)
 
+## NECESITO OPTIMIZAR ESTA PARTE, YA QUE SELENIUM ES MUY LENTO PARA ESTO AYUDAAAAAAAAAAAAAAA
+
 def set_driver(headless=True):
     options = Options()
+    options.binary_location = "/usr/bin/chromium"
+
     if headless:
         options.add_argument("--headless=new")
-        options.add_argument("--disable-gpu")
         options.add_argument("--no-sandbox")
+        options.add_argument("--disable-dev-shm-usage")
+        options.add_argument("--disable-gpu")
 
-    driver = webdriver.Chrome(options=options)
-    return driver
+    return webdriver.Chrome(options=options)
 
 
 def extract_data(driver, url, wait_time=10):
