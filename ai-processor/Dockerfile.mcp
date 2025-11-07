@@ -1,0 +1,17 @@
+# Imagen base ligera de Python 3.11 o superior
+FROM python:3.11-slim
+
+# Establecer el directorio de trabajo
+WORKDIR /app
+
+# Copiar los archivos del proyecto
+COPY . .
+
+# Instalar dependencias
+RUN pip install --no-cache-dir -r requirements.txt
+
+# Exponer el puerto (opcional, solo si usas SSE)
+EXPOSE 8000
+
+# Comando por defecto
+CMD ["python", "-m", "app.mcp_core.mcp_server", "--server_type", "sse"]
