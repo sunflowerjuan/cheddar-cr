@@ -35,7 +35,7 @@ services:
       - "traefik.http.routers.collector-static.rule=Host(`cr.localhost`) && PathPrefix(`/collector/flasgger_static`)"
       - "traefik.http.routers.collector-static.service=collector-api"
 
-  meta-collector:
+  meta-monitor:
     build: ./meta-monitor
     container_name: meta-monitor
     labels:
@@ -54,6 +54,17 @@ services:
       - "traefik.http.routers.monitor-static.rule=Host(`cr.localhost`) && PathPrefix(`/monitor/flasgger_static`)"
       - "traefik.http.routers.monitor-static.service=monitor-api"
 
-networks:
-  backend:
-    driver: bridge
+  mcp-server:
+    build:
+      context: ./ai-processor
+      dockerfile: Dockerfile.mcp
+    container_name: mcp_server
+    working_dir: /app
+    command: python -m app.mcp_core.mcp_server --server_type sse
+    ports:
+      - "8000:8000"
+    extra_hosts:
+      - "cr.localhost:172.17.0.1"
+    volumes:
+      - ./ai-processor:/app
+    restart: unless-stopped

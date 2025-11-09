@@ -1,9 +1,9 @@
 import logging
 from .tool_utils import APIConnector as api
-from utils.logger import get_logger
+from app.utils.logger import get_logger
 logger = get_logger(__name__)
 
-
+connector = api()
 def players_tools(mcp):
     """
     Collect all clash royale data from data-collector API.
@@ -11,7 +11,7 @@ def players_tools(mcp):
     Args:
         mcp: The FastMCP server instance
     """
-    api()
+    
     @mcp.tool()
     def get_player_data(player_tag: str) -> dict:
         """
@@ -57,8 +57,7 @@ def players_tools(mcp):
             },
         """
         logger.info(f"get_player_info called with player_tag: {player_tag}")
-                
-        result = api.get_player_data(player_tag)
+        result = connector.get_player_data(player_tag)
         logger.info(f"get_player_info completed successfully for player: {result.get('name', 'Unknown')}")
         return result
 
@@ -74,11 +73,50 @@ def players_tools(mcp):
         Returns:
             Battle log information including the battle details. Details returned include the gamemode, details about the
             cards in each player's deck and the outcome. The following is some mock data of the log info response:
-            
+            {
+            "battles": [
+                {
+                "battle_type": "PvP",
+                "game_mode": "Ladder",
+                "opponent": {
+                    "deck": [
+                    {
+                        "elixirCost": 4,
+                        "level": 10,
+                        "name": "Valkyrie",
+                        "rarity": "rare"
+                    }
+                    ],
+                    "elixir_leaked": 4.46,
+                    "name": "toediddler"
+                },
+                "player": {
+                    "deck": [
+                    {
+                        "elixirCost": 4,
+                        "level": 10,
+                        "name": "Hog Rider",
+                        "rarity": "rare"
+                    }
+                    ],
+                    "elixir_leaked": 0.02,
+                    "name": "Bootyclapper"
+                },
+                "result": "win",
+                "summary": {
+                    "draws": 0,
+                    "losses": 11,
+                    "total_battles": 30,
+                    "win_rate": 63.33,
+                    "wins": 19
+                }
+                }
+            ]
+            }
             
         """
         logger.info(f"get_player_battle_log called with player_tag: {player_tag}")
         
-        result = api.get_battle_log(player_tag)
+        result = connector.get_battle_log(player_tag)
         logger.info(f"get_player_battle_log completed successfully. Found {len(result)} battles")
         return result

@@ -1,9 +1,6 @@
 <p align="center">
-  <img src="cheddar-logo.png" alt="Cheddar-CR Logo" width="200"/>
+  <img src="cheddar-logo.png" alt="Cheddar-CR Logo" width="800"/>
 </p>
-
-<h1 align="center">Cheddar-CR</h1>
-<p align="center">Análisis competitivo y monitoreo del meta de Clash Royale</p>
 
 # Cheddar CR
 

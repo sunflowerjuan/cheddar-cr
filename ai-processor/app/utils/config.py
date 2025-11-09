@@ -5,4 +5,7 @@ load_dotenv()
 
 LLM_BASE_URL = os.getenv("BASE_URL")
 PLAYER_API_BASE_URL = "http://cr.localhost/collector"
+META_API_BASE_URL = "http://cr.localhost/monitor"
+
+KEY_PROMPT = os.getenv("KEY_PROMPT")
 
