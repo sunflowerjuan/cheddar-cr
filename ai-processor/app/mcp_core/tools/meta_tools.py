@@ -13,7 +13,7 @@ def meta_tools(mcp):
     connector = api()
     
     @mcp.tool()
-    def meta_data() -> dict:
+    def balance_data() -> dict:
         """
         Obtiene los cambios de balance más recientes del juego.
         """

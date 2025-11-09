@@ -57,7 +57,6 @@ def players_tools(mcp):
             },
         """
         logger.info(f"get_player_info called with player_tag: {player_tag}")
-        print("Fetching player data for tag:", player_tag)
         result = connector.get_player_data(player_tag)
         logger.info(f"get_player_info completed successfully for player: {result.get('name', 'Unknown')}")
         return result
