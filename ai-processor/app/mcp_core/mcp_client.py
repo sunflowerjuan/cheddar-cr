@@ -23,7 +23,7 @@ class ClashRoyaleAssistant:
         print("Inicializando asistente de Clash Royale...")
 
         # Modelo LLM
-        self.llm = ChatOllama(model="qwen3:4b", temperature=0.3, base_url=LLM_BASE_URL)
+        self.llm = ChatOllama(model="qwen3:4b", temperature=0.01, base_url=LLM_BASE_URL)
 
         # Cliente MCP (se conecta al servidor FastMCP)
         server_config = {
@@ -40,9 +40,9 @@ class ClashRoyaleAssistant:
         # Prompt del sistema
         self.SYSTEM_PROMPT = f"""
         Eres Missy (como la mosquetera de Clash Royale), una asistente experta en estrategias avanzadas de Clash Royale.
-        Cada que inicies una conversacion con un jugador debes presentarte como Missy y conocerlo lo mas rapido posible preguntale sobre su user_name
-        o pidele directamente su tag, automaticamente usa las herramientas de jugador para obtener sus datos y dale un resumen rapido para saber si es el o si
-        desea cambiar el tag.
+        Cada que inicies una conversacion con un jugador debes presentarte como Missy (OBLIGATORIO) y conocerlo lo mas rapido posible preguntale sobre su user_name
+        o pidele directamente su tag, automaticamente usa las herramientas de jugador para obtener sus datos y registro de batalla dale un resumen rapido para saber si es el o si
+        desea cambiar el tag si es muy malo hazlo saber.
         {KEY_PROMPT}
         Tu objetivo:
         - Guiar al jugador para mejorar su desempeño.
@@ -52,8 +52,8 @@ class ClashRoyaleAssistant:
         Tienes acceso a las siguientes herramientas:
         1. get_player_data(tag): Obtiene estadísticas del jugador.
         2. get_player_battle_log(tag): Obtiene historial de batallas recientes.
-        3. meta_data(): Obtiene los cambios de balance más recientes.
-        4. card_stats(): Obtiene estadísticas de uso y winrate de cartas en el meta.
+        3. meta_data(): (NO TIENE PARAMETROS OBLIGATORIO) Obtiene los cambios de balance más recientes.
+        4. card_stats(): (NO TIENE PARAMETROS OBLIGATORIO) Obtiene estadísticas de uso y winrate de cartas en el meta.
 
         Usa cada herramienta cuando puedas como por ejemplo:
         - Para preguntas sobre progreso, estadísticas o nivel: usa get_player_data
@@ -86,43 +86,36 @@ class ClashRoyaleAssistant:
         print(f"Se cargaron {len(mcp_tools)} herramientas desde el servidor.")
 
         # Herramientas MCP a LangChain
+
+        tools_with_tag = {"get_player_data", "get_player_battle_log"}
+
         tools = []
         for tool in mcp_tools:
-            async def async_wrapper(_tool=tool, **kwargs):
-                print(f"Invocando herramienta: {_tool.name}")
-                print(f"Con parámetros: {kwargs}")
-
-                try:
-                    # Comprobamos si 'player_tag' está presente en kwargs y lo pasamos como argumento directo
-                    if 'player_tag' in kwargs:
-                        # Validación con Pydantic si es necesario para 'player_tag'
-                        args = PlayerTagArgs(**kwargs)  # Validar el formato con Pydantic
-                        result = await _tool.ainvoke({"player_tag": kwargs['player_tag']})  # Pasar player_tag correctamente
-                    elif len(kwargs) == 0:
-                        # No hay parámetros para estas herramientas
-                        print("Herramienta sin parámetros.")
-                        result = await _tool.ainvoke()  # Llamada sin parámetros
-                    else:
-                        raise ValueError("Se esperaban parámetros con la clave 'player_tag'.")
-
-                    return result
-
-                except ValidationError as e:
-                    print(f"Error de validación: {e}")
-                    return f"Error de validación: {e}"
-                except Exception as e:
-                    print(f"Error al invocar la herramienta: {e}")
-                    return f"Error: {e}"
-
-
-
-            structured_tool = StructuredTool.from_function(
-                name=tool.name,
-                description=tool.description,
-                func=None,
-                coroutine=async_wrapper
-            )
+            if tool.name in tools_with_tag:
+                async def wrapper(player_tag: str, _tool=tool):
+                    print(f"Invocando {_tool.name} con tag {player_tag}")
+                    return await _tool.ainvoke({"player_tag": player_tag})
+                structured_tool = StructuredTool.from_function(
+                    name=tool.name,
+                    description=tool.description,
+                    coroutine=wrapper,
+                    args_schema=PlayerTagArgs 
+                )
+            else:
+                async def wrapper(_tool=tool):
+                    print(f"Invocando {_tool.name} sin parámetros")
+                    return await _tool.ainvoke({})
+                structured_tool = StructuredTool.from_function(
+                    name=tool.name,
+                    description=tool.description,
+                    coroutine=wrapper
+                )
             tools.append(structured_tool)
+
+
+
+
+
 
 
         self.tools = tools
@@ -179,7 +172,7 @@ class ClashRoyaleAssistant:
 
         except Exception as e:
             print(f"Error al procesar mensaje: {e}")
-            return f"Ocurrió un error: {e}"
+            return f"Ocurrió un error: {e} "
 
     async def interactive_chat(self):
         """Chat interactivo."""
