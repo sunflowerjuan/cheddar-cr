@@ -1,128 +1,167 @@
-import pika
-import threading
-import json
 import asyncio
-from telegram import Update
-from telegram.ext import (
-    ApplicationBuilder,
-    CommandHandler,
-    MessageHandler,
-    ContextTypes,
-    filters
-)
-from utils.config import TELEGRAM_TOKEN, RABBITMQ_HOST, RABBITMQ_USER, RABBITMQ_PASS
+import json
+import threading
+import time
+import requests
+import aio_pika
+from telegram.ext import ApplicationBuilder, CommandHandler, MessageHandler, filters
+from utils.config import RABBITMQ_URL, MCP_IN_QUEUE, MCP_OUT_QUEUE, TELEGRAM_TOKEN, TELEGRAM_API_URL
 from utils.logger import get_logger
 
 logger = get_logger(__name__)
 
-# RABBIT SETUP
-credentials = pika.PlainCredentials(RABBITMQ_USER, RABBITMQ_PASS)
-connection = pika.BlockingConnection(pika.ConnectionParameters(
-    host=RABBITMQ_HOST,
-    credentials=credentials
-))
-channel = connection.channel()
-channel.queue_declare(queue="telegram_to_mcp", durable=True)
-channel.queue_declare(queue="mcp_to_telegram", durable=True)
-channel.queue_declare(queue="notifications", durable=True)
 
+class RabbitConsumerThread(threading.Thread):
+    """
+    Hilo separado que corre su propio event loop y consume de MCP_OUT.
+    Cuando recibe una respuesta publica directamente a Telegram via HTTP API.
+    """
 
+    def __init__(self, rabbit_url, out_queue, stop_event: threading.Event):
+        super().__init__(daemon=True)
+        self.rabbit_url = rabbit_url
+        self.out_queue = out_queue
+        self._stop_event = stop_event
+        self.loop = asyncio.new_event_loop()
 
-# COMMAND /start
-async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    logger.info("Comando /start recibido de %s", update.effective_chat.id)
-    await update.message.reply_text(
-        "¡Hola! Soy Missy, tu asistente de Clash Royale. "
-        "Envíame tu tag con /mytag o simplemente escríbeme algo para hablar conmigo."
-    )
-
-
-# COMMAND /setinterval
-async def set_interval(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    logger.info("Comando /setinterval recibido de %s con args: %s",
-                update.effective_chat.id, context.args)
-    if len(context.args) == 0:
-        await update.message.reply_text("Uso: /setinterval <minutos>")
-        return
-    try:
-        minutes = int(context.args[0])
-        await update.message.reply_text(f"Intervalo de notificaciones establecido a {minutes} minutos.")
-    except ValueError:
-        logger.warning("Valor inválido para /setinterval: %s", context.args)
-        await update.message.reply_text("Por favor, ingresa un número válido de minutos.")
-
-
-# COMMAND /mytag
-async def set_tag(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    logger.info("Comando /mytag recibido de %s", update.effective_chat.id)
-    if len(context.args) == 0:
-        await update.message.reply_text("Uso: /mytag <#TAG_JUGADOR>")
-        return
-    player_tag = context.args[0]
-    msg = {
-        "chat_id": update.effective_chat.id,
-        "command": "set_tag",
-        "player_tag": player_tag
-    }
-    try:
-        channel.basic_publish(exchange="", routing_key="telegram_to_mcp", body=json.dumps(msg))
-        logger.info("Tag enviado a MCP: %s", msg)
-        await update.message.reply_text(f"Tag {player_tag} guardado y enviado a Missy.")
-    except Exception as e:
-        logger.exception("Error al publicar tag en RabbitMQ: %s", e)
-        await update.message.reply_text("Hubo un error al enviar tu tag a Missy.")
-
-
-# PROMPT HANDLER
-async def handle_prompt(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    user_message = update.message.text.strip()
-    chat_id = update.effective_chat.id
-    if not user_message:
-        return
-
-    msg = {
-        "chat_id": chat_id,
-        "command": "prompt",
-        "prompt": user_message
-    }
-
-    try:
-        channel.basic_publish(exchange="", routing_key="telegram_to_mcp", body=json.dumps(msg))
-        logger.info("Prompt enviado a MCP desde chat %s: %s", chat_id, user_message)
-        await update.message.reply_text("Enviando tu mensaje a Missy...")
-    except Exception as e:
-        logger.exception("Error al publicar prompt: %s", e)
-        await update.message.reply_text("Hubo un error al enviar tu mensaje a Missy.")
-
-
-#  CLIENT CONSUMER FROM MCP
-def consume_from_mcp(application):
-    def callback(ch, method, properties, body):
+    def run(self):
+        asyncio.set_event_loop(self.loop)
         try:
-            data = json.loads(body)
-            chat_id = data.get("chat_id")
-            text = data.get("message", "")
-            if chat_id and text:
-                logger.info("Mensaje recibido desde MCP para chat %s: %s", chat_id, text)
-                asyncio.run(application.bot.send_message(chat_id=chat_id, text=text))
+            self.loop.run_until_complete(self._consume_loop())
         except Exception as e:
-            logger.exception("Error al procesar mensaje desde MCP: %s", e)
+            logger.exception(f"Excepción en consumer thread: {e}")
+        finally:
+            pending = asyncio.all_tasks(loop=self.loop)
+            for t in pending:
+                t.cancel()
+            try:
+                self.loop.run_until_complete(self.loop.shutdown_asyncgens())
+            except Exception:
+                pass
+            self.loop.close()
+            logger.info("Consumer thread finalizado correctamente.")
 
-    logger.info("Esperando mensajes desde MCP...")
-    channel.basic_consume(queue="mcp_to_telegram", on_message_callback=callback, auto_ack=True)
-    channel.start_consuming()
+    async def _consume_loop(self):
+        logger.info("[Consumer] Conectando a RabbitMQ (consumer)...")
+        conn = await aio_pika.connect_robust(self.rabbit_url)
+        channel = await conn.channel()
+        queue = await channel.declare_queue(self.out_queue, durable=True)
+        logger.info(f"[Consumer] Conectado y escuchando {self.out_queue}")
 
+        async with queue.iterator() as queue_iter:
+            async for message in queue_iter:
+                async with message.process():
+                    try:
+                        data = json.loads(message.body.decode())
+                    except Exception:
+                        logger.warning(f"[Consumer] Mensaje no JSON: {message.body}")
+                        continue
+
+                    chat_id = data.get("chat_id")
+                    response = data.get("response", "").strip()
+                    if not chat_id:
+                        logger.warning(f"[Consumer] No chat_id en mensaje: {data}")
+                        continue
+                    if not response:
+                        logger.warning(f"[Consumer] Mensaje vacío ignorado: {data}")
+                        continue
+
+                    payload = {"chat_id": chat_id, "text": response}
+                    try:
+                        r = requests.post(TELEGRAM_API_URL, json=payload, timeout=10)
+                        if r.status_code != 200:
+                            logger.error(f"[Consumer] Error al enviar a Telegram: {r.status_code} {r.text}")
+                        else:
+                            logger.info(f"[Consumer] Enviado a Telegram chat_id={chat_id}")
+                    except Exception as e:
+                        logger.exception(f"[Consumer] Excepción enviando a Telegram: {e}")
+
+                if self._stop_event.is_set():
+                    break
+
+        await channel.close()
+        await conn.close()
+        logger.info("[Consumer] Cerrada conexión y thread finaliza.")
+
+
+class TelegramBot:
+    def __init__(self):
+        self.app = ApplicationBuilder().token(TELEGRAM_TOKEN).build()
+        self._pub_conn = None
+        self._pub_channel = None
+        self._stop_event = threading.Event()
+        self._consumer_thread = RabbitConsumerThread(RABBITMQ_URL, MCP_OUT_QUEUE, self._stop_event)
+
+    async def ensure_publisher(self):
+        if self._pub_conn and not self._pub_conn.is_closed:
+            return
+        logger.info("[Publisher] Conectando a RabbitMQ (publisher)...")
+        self._pub_conn = await aio_pika.connect_robust(RABBITMQ_URL)
+        self._pub_channel = await self._pub_conn.channel()
+        await self._pub_channel.declare_queue(MCP_IN_QUEUE, durable=True)
+        logger.info("[Publisher] Conectado (publisher)")
+
+    async def publish_to_mcp(self, chat_id: int, text: str):
+        await self.ensure_publisher()
+        message = {"chat_id": chat_id, "text": text}
+        await self._pub_channel.default_exchange.publish(
+            aio_pika.Message(body=json.dumps(message).encode()),
+            routing_key=MCP_IN_QUEUE,
+        )
+        logger.info(f"[Publisher] Encolado en {MCP_IN_QUEUE}: chat_id={chat_id}")
+
+    async def start_cmd(self, update, context):
+        await update.message.reply_text("Hola, soy MissyBot. Envíame algo y lo procesaré.")
+        logger.info(f"[Bot] /start usado por chat_id={update.effective_chat.id}")
+
+    async def message_handler(self, update, context):
+        text = update.message.text or ""
+        chat_id = update.effective_chat.id
+        await self.publish_to_mcp(chat_id, text)
+        await update.message.reply_text("Procesando tu solicitud...")
+        logger.info(f"[Bot] Mensaje recibido de chat_id={chat_id}: {text}")
+
+    def start(self):
+        self.app.add_handler(CommandHandler("start", self.start_cmd))
+        self.app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, self.message_handler))
+
+        logger.info("[Main] Iniciando consumer thread...")
+        self._consumer_thread.start()
+        time.sleep(0.1)
+
+        logger.info("[Main] Iniciando Bot (run_polling)...")
+        try:
+            self.app.run_polling()
+        finally:
+            self._stop_event.set()
+            logger.info("[Main] Bot detenido, esperando consumer thread terminar...")
+            self._consumer_thread.join(timeout=5)
+
+            loop = asyncio.get_event_loop()
+            if loop and not loop.is_closed():
+                loop.run_until_complete(self._close_publisher())
+            logger.info("[Main] Shutdown completo.")
+
+    async def _close_publisher(self):
+        if self._pub_channel and not self._pub_channel.is_closed:
+            await self._pub_channel.close()
+        if self._pub_conn and not self._pub_conn.is_closed:
+            await self._pub_conn.close()
+        logger.info("[Publisher] Conexión cerrada.")
 
 
 if __name__ == "__main__":
-    app = ApplicationBuilder().token(TELEGRAM_TOKEN).build()
-
-    app.add_handler(CommandHandler("start", start))
-    app.add_handler(CommandHandler("setinterval", set_interval))
-    app.add_handler(CommandHandler("mytag", set_tag))
-    app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, handle_prompt))
-
-    threading.Thread(target=consume_from_mcp, args=(app,), daemon=True).start()
-
-    logger.info("Bot de Telegram iniciado y en ejecución...")
-    app.run_polling()
+    bot = TelegramBot()
+    try:
+        bot.start()
+    except KeyboardInterrupt:
+        logger.warning("KeyboardInterrupt recibido, cerrando...")
+        bot._stop_event.set()
+        bot._consumer_thread.join(timeout=5)
+        try:
+            loop = asyncio.get_event_loop()
+            if loop and not loop.is_closed():
+                loop.run_until_complete(bot._close_publisher())
+        except Exception:
+            pass
+        logger.info("MissyBot detenido correctamente.")
