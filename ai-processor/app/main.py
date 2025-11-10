@@ -1,10 +1,10 @@
+# main.py
 import asyncio
-from mcp_core.mcp_client import ClashRoyaleAssistant 
+from mcp_core.mcp_worker import MCPWorker
 
-async def run_assistant():
-    assistant = ClashRoyaleAssistant()
-    await assistant.initialize_agent()
-    await assistant.interactive_chat()
+async def main():
+    worker = MCPWorker()
+    await worker.run()
 
 if __name__ == "__main__":
-    asyncio.run(run_assistant())
+    asyncio.run(main())
