@@ -89,5 +89,33 @@ services:
     volumes:
       - ./notification-engine:/app
 
+  # ai_processor:
+  #   build: ./ai-processor
+  #   container_name: ai_processor
+  #   depends_on:
+  #     - redis
+  #     - postgres
+  #   env_file:
+  #     - ./ai-processor/.env
+
+  redis:
+    image: redis:7
+    container_name: redis
+    ports:
+      - "6379:6379"
+
+  postgres:
+    image: postgres:16
+    container_name: postgres
+    environment:
+      POSTGRES_DB: missydb
+      POSTGRES_USER: missy
+      POSTGRES_PASSWORD: secret
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+
 volumes:
   rabbitmq_data:
+  pgdata:

@@ -9,6 +9,7 @@ from utils.config import RABBITMQ_HOST, RABBITMQ_USER, RABBITMQ_PASS
 class MCPWorker:
     def __init__(self):
         self.rabbit_url = f"amqp://{RABBITMQ_USER}:{RABBITMQ_PASS}@{RABBITMQ_HOST}/"
+        print(self.rabbit_url)
         self.in_queue_name = "mcp_in"
         self.out_queue_name = "mcp_out"
         self.assistant = None

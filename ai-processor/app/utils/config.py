@@ -21,3 +21,10 @@ server_config = {
 RABBITMQ_HOST = "localhost"
 RABBITMQ_USER = os.getenv("RABBITMQ_DEFAULT_USER")
 RABBITMQ_PASS = os.getenv("RABBITMQ_DEFAULT_PASS")
+
+POSTGRESS_HOST = "localhost"
+POSTGRES_DB = os.getenv("POSTGRES_DB")
+POSTGRES_USER = os.getenv("POSTGRES_USER")
+POSTGRES_PASSWORD = os.getenv("POSTGRES_PASSWORD")
+
+REDIS_HOST = "localhost"

@@ -42,46 +42,45 @@ class RabbitConsumerThread(threading.Thread):
             logger.info("Consumer thread finalizado correctamente.")
 
     async def _consume_loop(self):
-        logger.info("[Consumer] Conectando a RabbitMQ (consumer)...")
-        conn = await aio_pika.connect_robust(self.rabbit_url)
-        channel = await conn.channel()
-        queue = await channel.declare_queue(self.out_queue, durable=True)
-        logger.info(f"[Consumer] Conectado y escuchando {self.out_queue}")
+        while not self._stop_event.is_set():
+            try:
+                logger.info("[Consumer] Conectando a RabbitMQ (consumer)...")
+                conn = await aio_pika.connect_robust(self.rabbit_url)
+                channel = await conn.channel()
+                queue = await channel.declare_queue(self.out_queue, durable=True)
+                logger.info(f"[Consumer] Esperando mensajes en {self.out_queue}")
 
-        async with queue.iterator() as queue_iter:
-            async for message in queue_iter:
-                async with message.process():
-                    try:
-                        data = json.loads(message.body.decode())
-                    except Exception:
-                        logger.warning(f"[Consumer] Mensaje no JSON: {message.body}")
-                        continue
+                async with queue.iterator() as queue_iter:
+                    async for message in queue_iter:    
+                        async with message.process():
+                            try:
+                                data = json.loads(message.body.decode())
+                                chat_id = data.get("chat_id")
+                                response = (data.get("response") or "").strip()
+                                if not chat_id:
+                                    logger.warning(f"[Consumer] No chat_id en mensaje: {data}")
+                                    continue
+                                if not response:
+                                    logger.warning(f"[Consumer] Mensaje vacío ignorado: {data}")
+                                    continue
 
-                    chat_id = data.get("chat_id")
-                    response = data.get("response", "").strip()
-                    if not chat_id:
-                        logger.warning(f"[Consumer] No chat_id en mensaje: {data}")
-                        continue
-                    if not response:
-                        logger.warning(f"[Consumer] Mensaje vacío ignorado: {data}")
-                        continue
+                                payload = {"chat_id": chat_id, "text": response}
+                                r = requests.post(TELEGRAM_API_URL, json=payload, timeout=10)
+                                if r.status_code != 200:
+                                    logger.error(f"[Consumer] Error Telegram: {r.status_code} {r.text}")
+                                else:
+                                    logger.info(f"[Consumer] Enviado a Telegram chat_id={chat_id}")
 
-                    payload = {"chat_id": chat_id, "text": response}
-                    try:
-                        r = requests.post(TELEGRAM_API_URL, json=payload, timeout=10)
-                        if r.status_code != 200:
-                            logger.error(f"[Consumer] Error al enviar a Telegram: {r.status_code} {r.text}")
-                        else:
-                            logger.info(f"[Consumer] Enviado a Telegram chat_id={chat_id}")
-                    except Exception as e:
-                        logger.exception(f"[Consumer] Excepción enviando a Telegram: {e}")
+                            except Exception as e:
+                                logger.exception(f"[Consumer] Error procesando mensaje: {e}")
 
-                if self._stop_event.is_set():
-                    break
+                        if self._stop_event.is_set():
+                            break
 
-        await channel.close()
-        await conn.close()
-        logger.info("[Consumer] Cerrada conexión y thread finaliza.")
+            except Exception as e:
+                logger.exception(f"[Consumer] Fallo en bucle principal, reintentando en 5s: {e}")
+                await asyncio.sleep(5)
+
 
 
 class TelegramBot:
