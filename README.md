@@ -10,7 +10,7 @@ Cheddar CR es un sistema inteligente que analiza el rendimiento de jugadores de 
 
 ## Arquitectura general
 
-![Diagrama](./docs/Arquitectura.png)
+![Diagrama](./docs/arquitectura_finish.svg)
 
 ## Componentes principales
 
@@ -23,9 +23,9 @@ Cheddar CR es un sistema inteligente que analiza el rendimiento de jugadores de 
 4. **AI Processor**:
    Coordina la lógica de análisis y generación de lenguaje natural, el Modelo Local (LLM): ejecuta el procesamiento del texto de manera local recibe datos desde RabbitMQ, los analiza, y produce salidas personalizadas
 5. **Notification Engine**:
-   Es la interfaz principal con el jugador, permite que el usuario consulte su estado actual o reciba salidas del AI Processor, obtiene alertas automáticas con las novedades detectadas
+   Es la interfaz principal con el jugador, permite que el usuario consulte su estado actual o reciba salidas del AI Processor, obtiene alertas con las novedades detectadas
 6. **Persistence Layer**:
-   PostgreSQL almacena los datos persistentes como jugadores, historiales, configuraciones y resultados analizados. Redis (Cache), guarda temporalmente respuestas recientes o consultas frecuentes para acelerar el tiempo de respuesta del bot y evitar reprocesar información ya generada
+   PostgreSQL almacena los datos persistentes como jugadores, historiales, y resultados analizados. Redis (Cache), guarda temporalmente respuestas recientes o consultas frecuentes para acelerar el tiempo de respuesta del bot y evitar reprocesar información ya generada
 7. **RabbitMQ**:
    Es el núcleo de la comunicación entre contenedores El bot pública solicitudes, los procesadores las recogen, las resuelven y devuelven los resultados
 
